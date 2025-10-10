@@ -1,0 +1,10 @@
+attrs==25.3.0
+cffi==1.17.1
+cryptography==46.0.2
+distlib==0.4.0
+filelock==3.19.1
+packaging==25.0
+platformdirs==4.4.0
+pycparser==2.23
+virtualenv==20.34.0
+wheel==0.45.1
