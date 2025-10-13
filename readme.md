@@ -9,6 +9,8 @@ In the source directory, activate the local environment:
 Then run:
 
 `pip install -r requirements.txt`
+`ollama serve`
+`ollama pull gemma3`
 
 To run locally:
 

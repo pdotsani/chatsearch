@@ -1,15 +1,18 @@
 from ollama import chat
 from ollama import ChatResponse
-from flask import Flask
-from flask import request
+from flask import Flask, request, render_template
 import mistune
 
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.post("/chat")
 def send_chat_message():
-  data = request.get_json()
-  message = data['message']
+  message = request.form.get('message') or request.form.get_json('message')
+
   app.logger.info(f"Recieved message: {message}")
 
   response: ChatResponse = chat(model='gemma3', messages=[
@@ -21,5 +24,10 @@ def send_chat_message():
 
   markdown = mistune.html(response['message']['content'])
 
-  app.logger.info(f"Returning response")
-  return markdown
+  html = f"""
+    <div class="message bot-message markdown-body">
+        <strong>Bot:</strong> {markdown}
+    </div>
+    """
+    
+  return html
