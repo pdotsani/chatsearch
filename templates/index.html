@@ -25,6 +25,35 @@
             margin: 0 auto;
             padding: 45px;
         }
+        
+        #messages {
+            margin-bottom: 55px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+        }
+
+        .input-form {
+            background: white;
+            position: fixed;
+            display: flex;
+            justify-content: center;
+            bottom: 0;
+            padding: 5px 0;
+            width: 100%;
+            border-top: 1px solid lightgrey;
+        }
+
+        .input-form input {
+            padding: 5px;
+            border-radius: 5px;
+            width: 50%;
+        }
+
+        .input-form button {
+            margin-left: 10px;
+        }
 
         @media (max-width: 767px) {
             .markdown-body {
@@ -36,19 +65,20 @@
 <body>
     <div id="chat-container">
         <div id="messages"></div>
-        
-        <form hx-post="/chat" 
-              hx-target="#messages" 
-              hx-swap="beforeend"
-              hx-on::before-request="addUserMessage(event)">
-            <input type="text" 
-                   name="message" 
-                   id="message-input"
-                   placeholder="Type your message..."
-                   required />
-            <button type="submit">Send</button>
-        </form>
     </div>
+
+    <form class="input-form"
+            hx-post="/chat" 
+            hx-target="#messages" 
+            hx-swap="beforeend"
+            hx-on::before-request="addUserMessage(event)">
+        <input type="text" 
+                name="message" 
+                id="message-input"
+                placeholder="Type your message..."
+                required />
+        <button type="submit">></button>
+    </form>
     
     <script>
         function addUserMessage(event) {
