@@ -163,11 +163,22 @@ def get_response(job_id):
             job_data = json.loads(job_data_json)
             
             if job_data['status'] == 'completed':
+                # Return the completed result without HTMX attributes
                 return job_data['result']
             elif job_data['status'] == 'failed':
                 return f"<div class='message bot-message markdown-body'><strong>Bot:</strong> <em>❌ Error: {job_data.get('error', 'Unknown error')}</em></div>"
             else:
-                return "<div class='message bot-message markdown-body'><strong>Bot:</strong> <em>⏳ Still processing...</em></div>"
+                # Still processing - return the same element with HTMX attributes to continue polling
+                return f"""
+                <div id="bot-response-{job_id}" 
+                     class="message bot-message markdown-body"
+                     hx-get="/get-response/{job_id}"
+                     hx-trigger="every 1s"
+                     hx-target="this"
+                     hx-swap="outerHTML">
+                    <strong>Bot:</strong> <em>⏳ Still processing...</em>
+                </div>
+                """
         else:
             return "<div class='message bot-message markdown-body'><strong>Bot:</strong> <em>❌ Job not found</em></div>"
     except Exception as e:
@@ -195,51 +206,16 @@ def send_chat_message():
     is_htmx = request.headers.get('HX-Request') == 'true'
     
     if is_htmx:
-        # Return processing message with polling
+        # Return processing message with HTMX polling
         processing_html = f"""
-        <div id="bot-response-{job_id}" class="message bot-message markdown-body">
+        <div id="bot-response-{job_id}" 
+             class="message bot-message markdown-body"
+             hx-get="/get-response/{job_id}"
+             hx-trigger="every 1s"
+             hx-target="this"
+             hx-swap="outerHTML">
             <strong>Bot:</strong> <em>🤔 Thinking...</em>
         </div>
-        <script>
-            // Poll for the actual response
-            let pollCount = 0;
-            const maxPolls = 60 * 10; // 600 seconds max
-            
-            function pollForResponse() {{
-                pollCount++;
-                if (pollCount > maxPolls) {{
-                    const botResponse = document.getElementById('bot-response-{job_id}');
-                    if (botResponse) {{
-                        botResponse.innerHTML = '<strong>Bot:</strong> <em>⏰ Timeout - please try again</em>';
-                    }}
-                    return;
-                }}
-                
-                fetch('/get-response/{job_id}')
-                    .then(response => response.text())
-                    .then(html => {{
-                        const botResponse = document.getElementById('bot-response-{job_id}');
-                        if (botResponse) {{
-                            if (html.includes('Still processing')) {{
-                                // Still processing, poll again
-                                setTimeout(pollForResponse, 1000);
-                            }} else {{
-                                // Got the final result
-                                botResponse.outerHTML = html;
-                            }}
-                        }}
-                    }})
-                    .catch(error => {{
-                        const botResponse = document.getElementById('bot-response-{job_id}');
-                        if (botResponse) {{
-                            botResponse.innerHTML = '<strong>Bot:</strong> <em>❌ Error processing your message</em>';
-                        }}
-                    }});
-            }}
-            
-            // Start polling after a short delay
-            setTimeout(pollForResponse, 1000);
-        </script>
         """
         return processing_html
     else:
