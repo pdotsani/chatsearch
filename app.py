@@ -19,11 +19,52 @@ app = Flask(__name__)
 app.config['DEBUG'] = True
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max content length
 
+def cleanup_old_jobs():
+    """Clean up old completed jobs from Redis"""
+    try:
+        # Get all job keys
+        job_keys = redis_conn.keys('job:*')
+        current_time = time.time()
+        cleaned_count = 0
+        
+        for key in job_keys:
+            job_data_json = redis_conn.get(key)
+            if job_data_json:
+                job_data = json.loads(job_data_json)
+                
+                # Delete completed jobs older than 5 minutes
+                if job_data.get('status') == 'completed':
+                    completed_at = job_data.get('completed_at', 0)
+                    if current_time - completed_at > 300:  # 5 minutes
+                        redis_conn.delete(key)
+                        cleaned_count += 1
+                
+                # Delete failed jobs older than 10 minutes
+                elif job_data.get('status') == 'failed':
+                    failed_at = job_data.get('failed_at', 0)
+                    if current_time - failed_at > 600:  # 10 minutes
+                        redis_conn.delete(key)
+                        cleaned_count += 1
+        
+        if cleaned_count > 0:
+            app.logger.info(f"Cleaned up {cleaned_count} old jobs")
+            
+    except Exception as e:
+        app.logger.error(f"Error cleaning up old jobs: {str(e)}")
+
 def background_worker():
     """Background worker that processes the queue"""
+    cleanup_counter = 0
     while True:
         try:
             process_queue()
+            
+            # Clean up old jobs every 60 iterations (about every minute)
+            cleanup_counter += 1
+            if cleanup_counter >= 60:
+                cleanup_old_jobs()
+                cleanup_counter = 0
+                
             time.sleep(1)  # Check every second
         except Exception as e:
             app.logger.error(f"Error in background worker: {str(e)}")
@@ -230,4 +271,14 @@ def process_queue_endpoint():
         return jsonify({'status': 'success', 'message': 'Queue processed'})
     except Exception as e:
         app.logger.error(f"Error processing queue: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.post("/cleanup-jobs")
+def cleanup_jobs_endpoint():
+    """Manually clean up old jobs"""
+    try:
+        cleanup_old_jobs()
+        return jsonify({'status': 'success', 'message': 'Jobs cleaned up'})
+    except Exception as e:
+        app.logger.error(f"Error cleaning up jobs: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
