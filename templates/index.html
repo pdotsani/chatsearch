@@ -77,7 +77,7 @@
                 id="message-input"
                 placeholder="Type your message..."
                 required />
-        <button type="submit">></button>
+        <button type="submit" id="submit-btn">></button>
     </form>
     
     <script>
@@ -85,15 +85,35 @@
             const input = document.getElementById('message-input');
             const userMessage = input.value;
             
-            // Add user message immediately
-            const userDiv = document.createElement('div');
-            userDiv.className = 'message user-message markdown-body';
-            userDiv.innerHTML = `<strong>You:</strong> ${userMessage}`;
-            document.getElementById('messages').appendChild(userDiv);
+            if (userMessage.trim()) {
+                // Add user message immediately
+                const userDiv = document.createElement('div');
+                userDiv.className = 'message user-message markdown-body';
+                userDiv.innerHTML = `<strong>You:</strong> ${userMessage}`;
+                document.getElementById('messages').appendChild(userDiv);
+            }
             
             // Clear input
             input.value = '';
+            
+            // Disable submit button
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
         }
+
+        function resetSubmitButton() {
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '>';
+        }
+
+        // Reset button after HTMX request completes
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.xhr.status === 200) {
+                resetSubmitButton();
+            }
+        });
     </script>
 </body>
 </html>
