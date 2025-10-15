@@ -162,7 +162,7 @@ def send_chat_message():
         <script>
             // Poll for the actual response
             let pollCount = 0;
-            const maxPolls = 30; // 30 seconds max
+            const maxPolls = 60 * 10; // 600 seconds max
             
             function pollForResponse() {{
                 pollCount++;
