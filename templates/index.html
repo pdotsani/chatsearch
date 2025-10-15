@@ -70,7 +70,7 @@
     <form class="input-form"
             hx-post="/chat" 
             hx-target="#messages" 
-            hx-swap="beforeend"
+            hx-swap="none"
             hx-on::before-request="addUserMessage(event)">
         <input type="text" 
                 name="message" 
@@ -113,6 +113,17 @@
             if (event.detail.xhr.status === 200) {
                 resetSubmitButton();
             }
+        });
+
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+        let xhr = evt.detail.xhr;
+        if (xhr.getResponseHeader('Content-Type').includes('application/json')) {
+            let data = JSON.parse(xhr.responseText);
+            const chatBox = document.getElementById('chat-box');
+
+            // Insert the HTML returned by Flask
+            chatBox.innerHTML += data.html;
+        }
         });
     </script>
 </body>

@@ -241,7 +241,7 @@ def send_chat_message():
             setTimeout(pollForResponse, 1000);
         </script>
         """
-        return processing_html
+        return jsonify({'html': processing_html})
     else:
         # Return JSON for API requests
         return jsonify({
