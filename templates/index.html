@@ -119,10 +119,7 @@
         let xhr = evt.detail.xhr;
         if (xhr.getResponseHeader('Content-Type').includes('application/json')) {
             let data = JSON.parse(xhr.responseText);
-            const chatBox = document.getElementById('chat-box');
-
-            // Insert the HTML returned by Flask
-            chatBox.innerHTML += data.html;
+            document.getElementById('messages').appendChild(data.html);
         }
         });
     </script>
